@@ -1,11 +1,13 @@
 from PyGL.utils import *
+from random import randint
 
-global window
+global windowSize
 
 class gl(object):
     def init(this):
-        this.window = [None, None]
-        this.viewport = [None, None, None, None]
+        this.windowSize = [None, None]
+        this.imageSize = [None, None]
+        this.offset = [None, None]
         this.pixels = [[None]]
 
         this.backgroundColor = color(0, 0, 0)
@@ -13,24 +15,38 @@ class gl(object):
 
 
     def createWindow(this, newWidth, newHeight):
-        this.window = [newWidth, newHeight]
+        this.windowSize = [newWidth, newHeight]
+        this.pixels = [[color(randint(0, 255), randint(0, 255), randint(0, 255)) for x in range(this.windowSize[0])] for y in range(this.windowSize[1])] 
 
     def viewPort(this, x, y, width, height):
-        this.viewport = [x, y, width, height]
-        this.pixels = [[this.backgroundColor for x in range(this.viewport[2])] for y in range(this.viewport[3])] 
+        this.imageSize = [width, height]
+
+        offsetX = int((this.windowSize[0] - this.imageSize[0]) / 2)
+        offsetY = int((this.windowSize[1] - this.imageSize[1]) / 2)
+
+        offsetX = offsetX + (offsetX * x)
+        offsetY = offsetY + (offsetY * y)
+
+        this.offset = [offsetX, offsetY]
+
+        for x in range (0, this.imageSize[0]):
+            for y in range (0, this.imageSize[1]):
+                this.pixels[x + offsetX][y + offsetY] = this.backgroundColor
 
     def clear(this):
-        this.pixels = [[this.backgroundColor for x in range(this.viewport[2])] for y in range(this.viewport[3])] 
+        for x in range (0, this.imageSize[0]):
+            for y in range (0, this.imageSize[1]):
+                this.pixels[x + this.offset[0]][y + this.offset[1]] = this.backgroundColor
 
     def clearColor(this, r, g, b):
         this.backgroundColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def vertex(this, x, y):
-        offsetX = int(this.viewport[2] / 2)
-        offsetY = int(this.viewport[3] / 2)
+        offsetX = int(this.imageSize[0] / 2)
+        offsetY = int(this.imageSize[1] / 2)
 
-        x = offsetX + int(offsetX * x)
-        y = offsetY + int(offsetY * y)
+        x = offsetX + int(offsetX * x) + this.offset[0]
+        y = offsetY + int(offsetY * y) + this.offset[1]
 
         this.pixels[x][y] = this.cursorColor
 
@@ -43,37 +59,25 @@ class gl(object):
         # File header (14 bytes)
         f.write(char('B'))
         f.write(char('M'))
-        f.write(doubleword(14 + 40 + this.window[0] * this.window[1] * 3))
+        f.write(doubleword(14 + 40 + this.windowSize[0] * this.windowSize[1] * 3))
         f.write(doubleword(0))
         f.write(doubleword(14 + 40))
 
         # Image header (40 bytes)
         f.write(doubleword(40))
-        f.write(doubleword(this.window[0]))
-        f.write(doubleword(this.window[1]))
+        f.write(doubleword(this.windowSize[0]))
+        f.write(doubleword(this.windowSize[1]))
         f.write(word(1))
         f.write(word(24))
         f.write(doubleword(0))
-        f.write(doubleword(this.window[0] * this.window[1] * 3))
+        f.write(doubleword(this.windowSize[0] * this.windowSize[1] * 3))
         f.write(doubleword(0))
         f.write(doubleword(0))
         f.write(doubleword(0))
         f.write(doubleword(0))
 
-        offsetX = int((this.window[0] - this.viewport[2]) / 2)
-        offsetY = int((this.window[1] - this.viewport[3]) / 2)
-
-        offsetX = offsetX + (offsetX * this.viewport[0])
-        offsetY = offsetY + (offsetY * this.viewport[1])
-
-        image = [[color(255, 255, 255) for x in range(this.window[0])] for y in range(this.window[1])] 
-
-        for x in range (0, this.viewport[2]):
-            for y in range (0, this.viewport[3]):
-                image[x + offsetX][y + offsetY] = this.pixels[x][y]
-
-        for x in range (0, this.window[0]):
-            for y in range (0, this.window[1]):
-                f.write(image[x][y])
+        for x in range (0, this.windowSize[0]):
+            for y in range (0, this.windowSize[1]):
+                f.write(this.pixels[x][y])
 
         f.close()
