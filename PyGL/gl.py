@@ -10,38 +10,41 @@ class gl(object):
         this.offset = [None, None]
         this.pixels = [[None]]
 
-        this.backgroundColor = color(0, 0, 0)
-        this.cursorColor = color(255, 255, 255)      
-
+        this.backgroundColor = color(0, 0, 0) # Default background is black
+        this.cursorColor = color(255, 255, 255) # Default color is white
 
     def createWindow(this, newWidth, newHeight):
+        # Creates window and fills window with simulated static
         this.windowSize = [newWidth, newHeight]
         this.pixels = [[color(randint(0, 255), randint(0, 255), randint(0, 255)) for x in range(this.windowSize[0])] for y in range(this.windowSize[1])] 
 
     def viewPort(this, x, y, width, height):
-        this.imageSize = [width, height]
-
-        offsetX = int((this.windowSize[0] - this.imageSize[0]) / 2)
-        offsetY = int((this.windowSize[1] - this.imageSize[1]) / 2)
+        # Creates viewport with given dimensions and offset from center
+        offsetX = int((this.windowSize[0] - width) / 2)
+        offsetY = int((this.windowSize[1] - height) / 2)
 
         offsetX = offsetX + (offsetX * x)
         offsetY = offsetY + (offsetY * y)
 
         this.offset = [offsetX, offsetY]
+        this.imageSize = [width, height]
 
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
                 this.pixels[x + offsetX][y + offsetY] = this.backgroundColor
 
     def clear(this):
+        # Clears the viewport 
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
                 this.pixels[x + this.offset[0]][y + this.offset[1]] = this.backgroundColor
 
     def clearColor(this, r, g, b):
+        # Changes the background color
         this.backgroundColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def vertex(this, x, y):
+        # Draws a pixel at the given coordinates
         offsetX = int(this.imageSize[0] / 2)
         offsetY = int(this.imageSize[1] / 2)
 
@@ -51,9 +54,11 @@ class gl(object):
         this.pixels[x][y] = this.cursorColor
 
     def color(this, r, g, b):
+        # Changes the cursor color
         this.cursorColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def finish(this):
+        # Prints the pixels to the screen
         f = open('out.bmp', 'bw')
 
         # File header (14 bytes)
