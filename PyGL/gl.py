@@ -1,8 +1,6 @@
 from PyGL.utils import *
 from random import randint
 
-global windowSize
-
 class gl(object):
     def init(this):
         this.windowSize = [None, None]
