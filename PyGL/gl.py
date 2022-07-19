@@ -74,8 +74,13 @@ class gl(object):
         this.cursorColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def line(this, x1, y1, x2, y2):
-        if (x1 > this.imageSize[0] / 2) or (x1 < -this.imageSize[0] / 2) or (y1 > this.imageSize[1] / 2) or (y1 < -this.imageSize[1] / 2):
-            raise Exception('Line cannot be drawn outside of viewport')
+        if not (-1 <= x1 <= 1) or not (-1 <= y1 <= 1) or not (-1 <= x2 <= 1) or not (-1 <= y2 <= 1):
+            raise Exception('Line offset must be between -1 and 1 (inclusive)')
+
+        x1 = int(x1 * this.imageSize[0] / 2)
+        y1 = int(y1 * this.imageSize[1] / 2)
+        x2 = int(x2 * this.imageSize[0] / 2)
+        y2 = int(y2 * this.imageSize[1] / 2)
 
         dy = abs(y2 - y1)
         dx = abs(x2 - x1)
