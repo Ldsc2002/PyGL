@@ -73,6 +73,34 @@ class gl(object):
         # Changes the cursor color
         this.cursorColor = color(int(r * 255), int(g * 255), int(b * 255))
 
+    def line(this, x1, y1, x2, y2):
+        dy = abs(y2 - y1)
+        dx = abs(x2 - x1)
+    
+        offset = 0
+        threshold = dx
+
+        if dy > dx:
+            x1, y1 = y1, x1
+            x2, y2 = y2, x2
+
+        if x1 > x2:
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+
+        y = y1
+
+        for x in range(x1, x2 + 1):
+            if dy > dx:
+                gl.vertex(this, y / (this.imageSize[0] / 2), x /(this.imageSize[0] / 2))
+            else:
+                gl.vertex(this, x / (this.imageSize[0] / 2), y /(this.imageSize[0] / 2))
+            
+            offset += dy
+            if offset >= threshold:
+                y += 1 if y1 < y2 else -1
+                threshold += dx
+
     def finish(this):
         # Prints the pixels to the screen
         f = open('out.bmp', 'bw')
