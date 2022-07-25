@@ -58,13 +58,13 @@ class gl(object):
             raise Exception('Vertex offset must be between -1 and 1 (inclusive)')
 
         # Draws a pixel at the given coordinates
-        offsetX = int(this.imageSize[0] / 2)
-        offsetY = int(this.imageSize[1] / 2)
+        offsetX = (this.imageSize[0] / 2)
+        offsetY = (this.imageSize[1] / 2)
 
-        x = offsetX + int(offsetX * x) + this.offset[0]
-        y = offsetY + int(offsetY * y) + this.offset[1]
+        x = int(offsetX + (offsetX * x) + this.offset[0])
+        y = int(offsetY + (offsetY * y) + this.offset[1])
 
-        this.pixels[x][y] = this.cursorColor
+        this.pixels[y][x] = this.cursorColor
 
     def color(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -88,21 +88,25 @@ class gl(object):
         offset = 0
         threshold = dx
 
-        if dy > dx:
+        steep = dy > dx
+        if steep:
             x1, y1 = y1, x1
             x2, y2 = y2, x2
 
+            dy = abs(y2 - y1)
+            dx = abs(x2 - x1)
+
         if x1 > x2:
             x1, x2 = x2, x1
-            y1, y2 = y2, y1
+            y1, y2 = y2, y1 
 
         y = y1
 
         for x in range(x1, x2 + 1):
-            if dy > dx:
-                gl.vertex(this, y / (this.imageSize[0] / 2), x /(this.imageSize[0] / 2))
+            if steep:
+                gl.vertex(this, y / (this.imageSize[1] / 2), x /(this.imageSize[0] / 2))
             else:
-                gl.vertex(this, x / (this.imageSize[0] / 2), y /(this.imageSize[0] / 2))
+                gl.vertex(this, x / (this.imageSize[0] / 2), y /(this.imageSize[1] / 2))
             
             offset += dy
             if offset >= threshold:
