@@ -113,6 +113,61 @@ class gl(object):
                 y += 1 if y1 < y2 else -1
                 threshold += dx
 
+
+    def poligon(this, poligon):
+        with open(poligon) as f:
+            lines = f.read().splitlines()
+
+            for i in range(len(lines)):
+                x1, y1 = lines[i % len(lines)].split(', ')
+                x2, y2 = lines[(i + 1) % len(lines)].split(', ')
+
+                x1 = float(x1)
+                y1 = float(y1)
+                x2 = float(x2)
+                y2 = float(y2)
+
+                this.line((x1 / (this.imageSize[0] / 2)), (y1 / (this.imageSize[1] / 2)), (x2 / (this.imageSize[0] / 2)), (y2 / (this.imageSize[1] / 2)))
+
+    def fill(this, poligon):
+        fill = []
+        poligonY = []
+        poligonX = []
+
+        with open(poligon) as f:
+            lines = f.read().splitlines()
+            
+            for i in range(len(lines)):
+                x1, y1 = lines[i % len(lines)].split(', ')
+                poligonY.append(int(y1))
+                poligonX.append(int(x1))
+        
+        xmin, ymin, xmax, ymax = min(poligonX), min(poligonY), max(poligonX), max(poligonY)
+        
+        offsetX = (this.imageSize[0] / 2)
+        offsetY = (this.imageSize[1] / 2)
+
+        for y in range(ymin, ymax + 1):
+            y = int(offsetY + (y) + this.offset[1])
+
+            for x in range(xmin, xmax + 1):
+                x = int(offsetX + (x) + this.offset[0])
+
+                if this.pixels[y][x] == this.cursorColor and this.pixels[y][x - 1] != this.cursorColor and this.pixels[y][x - 2] != this.cursorColor:
+                    fill.append(x)
+
+            if len(fill) > 1:
+                if len(fill) % 2 == 0:
+                    for i in range(0, len(fill) - 1, 2):
+                        for num in range(fill[i], fill[i + 1]):
+                            this.pixels[y][num] = this.cursorColor
+                else:
+                    for i in range(len(fill) - 1):
+                        for num in range(fill[i], fill[i + 1]):
+                            this.pixels[y][num] = this.cursorColor
+                fill = []
+
+
     def finish(this):
         # Prints the pixels to the screen
         f = open('out.bmp', 'bw')
