@@ -82,19 +82,18 @@ class gl(object):
         x2 = int(x2 * this.imageSize[0] / 2)
         y2 = int(y2 * this.imageSize[1] / 2)
 
-        dy = abs(y2 - y1)
-        dx = abs(x2 - x1)
+        dy, dx = abs(y2 - y1), abs(x2 - x1)
     
         offset = 0
         threshold = dx
 
-        steep = dy > dx
-        if steep:
+        steep = False
+        if dy > dx:
+            steep = True
             x1, y1 = y1, x1
             x2, y2 = y2, x2
 
-            dy = abs(y2 - y1)
-            dx = abs(x2 - x1)
+            dy, dx = abs(y2 - y1), abs(x2 - x1)
 
         if x1 > x2:
             x1, x2 = x2, x1
@@ -115,32 +114,32 @@ class gl(object):
 
 
     def poligon(this, poligon):
-        with open(poligon) as f:
-            lines = f.read().splitlines()
+        f = open(poligon)
+        lines = f.read().splitlines()
 
-            for i in range(len(lines)):
-                x1, y1 = lines[i % len(lines)].split(', ')
-                x2, y2 = lines[(i + 1) % len(lines)].split(', ')
+        for i in range(len(lines)):
+            x1, y1 = lines[i % len(lines)].split(', ')
+            x2, y2 = lines[(i + 1) % len(lines)].split(', ')
 
-                x1 = float(x1) - this.imageSize[0] / 2
-                y1 = float(y1) - this.imageSize[1] / 2
-                x2 = float(x2) - this.imageSize[0] / 2
-                y2 = float(y2) - this.imageSize[1] / 2
+            x1 = (float(x1) - this.imageSize[0] / 2) / (this.imageSize[0] / 2)
+            y1 = (float(y1) - this.imageSize[1] / 2) / (this.imageSize[1] / 2)
+            x2 = (float(x2) - this.imageSize[0] / 2) / (this.imageSize[0] / 2)
+            y2 = (float(y2) - this.imageSize[1] / 2) / (this.imageSize[1] / 2)
 
-                this.line((x1 / (this.imageSize[0] / 2)), (y1 / (this.imageSize[1] / 2)), (x2 / (this.imageSize[0] / 2)), (y2 / (this.imageSize[1] / 2)))
+            this.line(x1, y1, x2, y2)
 
     def fill(this, poligon):
         fill = []
         poligonY = []
         poligonX = []
 
-        with open(poligon) as f:
-            lines = f.read().splitlines()
-            
-            for i in range(len(lines)):
-                x1, y1 = lines[i % len(lines)].split(', ')
-                poligonY.append(int(y1))
-                poligonX.append(int(x1))
+        f = open(poligon)
+        lines = f.read().splitlines()
+        
+        for i in range(len(lines)):
+            x1, y1 = lines[i % len(lines)].split(', ')
+            poligonY.append(int(y1))
+            poligonX.append(int(x1))
         
         xmin, ymin, xmax, ymax = min(poligonX), min(poligonY), max(poligonX), max(poligonY)
 
