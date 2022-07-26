@@ -122,10 +122,10 @@ class gl(object):
                 x1, y1 = lines[i % len(lines)].split(', ')
                 x2, y2 = lines[(i + 1) % len(lines)].split(', ')
 
-                x1 = float(x1)
-                y1 = float(y1)
-                x2 = float(x2)
-                y2 = float(y2)
+                x1 = float(x1) - (this.imageSize[0] / 2)
+                y1 = float(y1) - this.imageSize[1] / 2
+                x2 = float(x2) - this.imageSize[0] / 2
+                y2 = float(y2) - this.imageSize[1] / 2
 
                 this.line((x1 / (this.imageSize[0] / 2)), (y1 / (this.imageSize[1] / 2)), (x2 / (this.imageSize[0] / 2)), (y2 / (this.imageSize[1] / 2)))
 
@@ -143,17 +143,14 @@ class gl(object):
                 poligonX.append(int(x1))
         
         xmin, ymin, xmax, ymax = min(poligonX), min(poligonY), max(poligonX), max(poligonY)
-        
-        offsetX = (this.imageSize[0] / 2)
-        offsetY = (this.imageSize[1] / 2)
 
         for y in range(ymin, ymax + 1):
-            y = int(offsetY + (y) + this.offset[1])
+            y = int((y) + this.offset[1])
 
             for x in range(xmin, xmax + 1):
-                x = int(offsetX + (x) + this.offset[0])
+                x = int((x) + this.offset[0])
 
-                if this.pixels[y][x] == this.cursorColor and this.pixels[y][x - 1] != this.cursorColor and this.pixels[y][x - 2] != this.cursorColor:
+                if this.pixels[y][x] == this.cursorColor and this.pixels[y][x - 1] != this.cursorColor:
                     fill.append(x)
 
             if len(fill) > 1:

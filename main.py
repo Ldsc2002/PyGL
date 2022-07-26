@@ -3,10 +3,19 @@ from PyGL.gl import gl
 render = gl()
 
 render.init()
-render.createWindow(1100, 1100)
-render.viewPort(0, 0, 1000, 1000)
+render.createWindow(900, 900)
+render.viewPort(0, 0, 800, 800)
 
-render.poligon('Assets/star.txt')
-render.fill('Assets/star.txt')
+render.poligon('Assets/1.txt')
+render.fill('Assets/1.txt')
+
+render.poligon('Assets/2.txt')
+render.fill('Assets/2.txt')
+
+render.poligon('Assets/3.txt')
+render.fill('Assets/3.txt')
+
+render.poligon('Assets/4.txt')
+render.fill('Assets/4.txt')
 
 render.finish()
