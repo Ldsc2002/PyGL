@@ -122,7 +122,7 @@ class gl(object):
                 x1, y1 = lines[i % len(lines)].split(', ')
                 x2, y2 = lines[(i + 1) % len(lines)].split(', ')
 
-                x1 = float(x1) - (this.imageSize[0] / 2)
+                x1 = float(x1) - this.imageSize[0] / 2
                 y1 = float(y1) - this.imageSize[1] / 2
                 x2 = float(x2) - this.imageSize[0] / 2
                 y2 = float(y2) - this.imageSize[1] / 2

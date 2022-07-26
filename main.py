@@ -18,4 +18,8 @@ render.fill('Assets/3.txt')
 render.poligon('Assets/4.txt')
 render.fill('Assets/4.txt')
 
+render.color(0, 0, 0)
+render.poligon('Assets/5.txt')
+render.fill('Assets/5.txt')
+
 render.finish()
