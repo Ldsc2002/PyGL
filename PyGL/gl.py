@@ -1,4 +1,5 @@
 from PyGL.utils import *
+from PyGL.obj import obj
 from random import randint
 
 class gl(object):
@@ -6,7 +7,7 @@ class gl(object):
         this.windowSize = [None, None]
         this.imageSize = [None, None]
         this.offset = [None, None]
-        this.pixels = [[None]]
+        this.pixels = []
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -17,7 +18,13 @@ class gl(object):
 
         # Creates window and fills window with simulated static
         this.windowSize = [newWidth, newHeight]
-        this.pixels = [[color(randint(0, 255), randint(0, 255), randint(0, 255)) for x in range(this.windowSize[0])] for y in range(this.windowSize[1])] 
+        this.pixels = []
+
+        for y in range (0, this.windowSize[1]):
+            row = []
+            for x in range (0, this.windowSize[0]):
+                row.append(color(randint(0, 255), randint(0, 255), randint(0, 255)))
+            this.pixels.append(row)
 
     def viewPort(this, x, y, width, height):
         if not (-1 <= x <= 1) or not (-1 <= y <= 1):
@@ -38,13 +45,13 @@ class gl(object):
 
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
-                this.pixels[x + offsetX][y + offsetY] = this.backgroundColor
+                this.pixels[y + offsetY][x + offsetX] = this.backgroundColor
 
     def clear(this):
         # Clears the viewport 
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
-                this.pixels[x + this.offset[0]][y + this.offset[1]] = this.backgroundColor
+                this.pixels[y + this.offset[1]][x + this.offset[0]] = this.backgroundColor
 
     def clearColor(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -163,6 +170,25 @@ class gl(object):
                             this.pixels[y][num] = this.cursorColor
                 fill = []
 
+    def load(this, filename, translate, scale):
+        model = obj(filename)
+        
+        for face in model.faces:
+            count = len(face)
+
+            for j in range(count):
+                f1 = face[j][0]
+                f2 = face[(j + 1) % count][0]
+
+                v1 = model.vertices[f1 - 1]
+                v2 = model.vertices[f2 - 1]
+                
+                x1 = (v1[0] + translate[0]) * scale
+                y1 = (v1[1] + translate[1]) * scale
+                x2 = (v2[0] + translate[0]) * scale
+                y2 = (v2[1] + translate[1]) * scale
+
+                this.line(x1, y1, x2, y2)
 
     def finish(this):
         # Prints the pixels to the screen
@@ -188,8 +214,8 @@ class gl(object):
         f.write(doubleword(0))
         f.write(doubleword(0))
 
-        for x in range (0, this.windowSize[0]):
-            for y in range (0, this.windowSize[1]):
-                f.write(this.pixels[x][y])
+        for y in range (0, this.windowSize[1]):
+            for x in range (0, this.windowSize[0]):
+                f.write(this.pixels[y][x])
 
         f.close()
