@@ -84,6 +84,16 @@ class gl(object):
 
         this.pixels[y][x] = this.cursorColor
 
+    def absoluteVertex(this, x, y):
+        # Draws a pixel at the given coordinates
+        offsetX = (this.imageSize[0] / 2)
+        offsetY = (this.imageSize[1] / 2)
+
+        x = int(offsetX + x + this.offset[0])
+        y = int(offsetY + y + this.offset[1])
+
+        this.pixels[y][x] = this.cursorColor
+
     def color(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
             raise Exception('Color value must be between 0 and 1 (inclusive)')
@@ -264,7 +274,7 @@ class gl(object):
 
                 if z > this.zbuffer[x][y]:
                     this.cursorColor = color
-                    this.vertex(x / this.imageSize[0], y / this.imageSize[1])
+                    this.absoluteVertex(x, y)
                     this.zbuffer[x][y] = z
     
     def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
@@ -304,3 +314,4 @@ class gl(object):
                 f.write(this.pixels[y][x])
 
         f.close()
+        print('Image saved as ' + name)
