@@ -8,6 +8,7 @@ class gl(object):
         this.imageSize = [None, None]
         this.offset = [None, None]
         this.pixels = []
+        this.zbuffer = []
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -19,12 +20,18 @@ class gl(object):
         # Creates window and fills window with simulated static
         this.windowSize = [newWidth, newHeight]
         this.pixels = []
+        this.zbuffer = []
 
         for y in range (0, this.windowSize[1]):
             row = []
+            bufferRow = []
+
             for x in range (0, this.windowSize[0]):
                 row.append(color(randint(0, 255), randint(0, 255), randint(0, 255)))
+                bufferRow.append(0)
+
             this.pixels.append(row)
+            this.zbuffer.append(bufferRow)
 
     def viewPort(this, x, y, width, height):
         if not (-1 <= x <= 1) or not (-1 <= y <= 1):
@@ -52,6 +59,10 @@ class gl(object):
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
                 this.pixels[y + this.offset[1]][x + this.offset[0]] = this.backgroundColor
+
+        for x in range (0, this.imageSize[0]):
+            for y in range (0, this.imageSize[1]):
+                this.zbuffer[x][y] = 0
 
     def clearColor(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -172,27 +183,101 @@ class gl(object):
 
     def load(this, filename, translate, scale):
         model = obj(filename)
+
+        light = V3(0,0,1)
         
         for face in model.faces:
             count = len(face)
 
-            for j in range(count):
-                f1 = face[j][0]
-                f2 = face[(j + 1) % count][0]
+            if count == 2: 
+                for j in range(count):
+                    f1 = face[j][0]
+                    f2 = face[(j + 1) % count][0]
 
-                v1 = model.vertices[f1 - 1]
-                v2 = model.vertices[f2 - 1]
+                    v1 = model.vertices[f1 - 1]
+                    v2 = model.vertices[f2 - 1]
+                    
+                    x1 = (v1[0] + translate[0]) * scale[0]
+                    y1 = (v1[1] + translate[1]) * scale[1]
+                    x2 = (v2[0] + translate[0]) * scale[0]
+                    y2 = (v2[1] + translate[1]) * scale[1]
+
+                    this.line(x1, y1, x2, y2)
+
+            elif count == 3:
+                f1 = face[0][0] - 1
+                f2 = face[1][0] - 1
+                f3 = face[2][0] - 1
+
+                a = this.transform(model.vertices[f1], translate, scale)
+                b = this.transform(model.vertices[f2], translate, scale)
+                c = this.transform(model.vertices[f3], translate, scale)
+
+                normal = norm (cross(sub(b, a), sub(c, a)))
+                intensity = dot(normal, light)
+                colorTransparency = round(255 * intensity)
+
+                if intensity < 0:
+                    colorTransparency = 0
+
+                this.triangle(a, b, c, color(colorTransparency, colorTransparency, colorTransparency))
+
+            elif count == 4:
+                f1 = face[0][0] - 1
+                f2 = face[1][0] - 1
+                f3 = face[2][0] - 1
+                f4 = face[3][0] - 1
+
+                vertices = [
+                    this.transform(model.vertices[f1], translate, scale),
+                    this.transform(model.vertices[f2], translate, scale),
+                    this.transform(model.vertices[f3], translate, scale),
+                    this.transform(model.vertices[f4], translate, scale)
+                ]
+
+                normal = norm (cross(sub(vertices[1], vertices[0]), sub(vertices[2], vertices[0])))
+                intensity = dot(normal, light)
+
+                colorTransparency = round(255 * intensity)
+
+                if colorTransparency < 0:
+                    colorTransparency = 0
                 
-                x1 = (v1[0] + translate[0]) * scale
-                y1 = (v1[1] + translate[1]) * scale
-                x2 = (v2[0] + translate[0]) * scale
-                y2 = (v2[1] + translate[1]) * scale
+                A, B, C, D = vertices
 
-                this.line(x1, y1, x2, y2)
+                this.triangle(A, B, C, color(colorTransparency, colorTransparency, colorTransparency))
+                this.triangle(A, C, D, color(colorTransparency, colorTransparency, colorTransparency))
 
-    def finish(this):
+
+    def triangle(this, A, B, C, color = None):
+        xmin, xmax, ymin, ymax = bbox(A, B, C)
+
+        for x in range(xmin, xmax + 1):
+            for y in range(ymin, ymax + 1):
+                P = V2(x, y)
+                w, v, u = barycentric(A, B, C, P)
+                
+                if w < 0 or v < 0 or u < 0:
+                    continue
+                
+                z = A.z * w + B.z * v + C.z * u
+
+                if z > this.zbuffer[x][y]:
+                    this.cursorColor = color
+                    this.vertex(x / this.imageSize[0], y / this.imageSize[1])
+                    this.zbuffer[x][y] = z
+    
+    def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+        return V3(
+            round((vertex[0] + translate[0]) * scale[0]),
+            round((vertex[1] + translate[1]) * scale[1]),
+            round((vertex[2] + translate[2]) * scale[2])
+    )
+
+    def finish(this, name):
         # Prints the pixels to the screen
-        f = open('out.bmp', 'bw')
+        name  = name + '.bmp'
+        f = open(name, 'bw')
 
         # File header (14 bytes)
         f.write(char('B'))
