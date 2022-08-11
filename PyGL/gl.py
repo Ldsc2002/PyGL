@@ -62,7 +62,7 @@ class gl(object):
 
         for x in range (0, this.imageSize[0]):
             for y in range (0, this.imageSize[1]):
-                this.zbuffer[x][y] = 0
+                this.zbuffer[y][x] = 0
 
     def clearColor(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -262,8 +262,8 @@ class gl(object):
     def triangle(this, A, B, C, color = None):
         xmin, xmax, ymin, ymax = bbox(A, B, C)
 
-        for x in range(xmin, xmax + 1):
-            for y in range(ymin, ymax + 1):
+        for y in range(ymin, ymax + 1):
+            for x in range(xmin, xmax + 1):
                 P = V2(x, y)
                 w, v, u = barycentric(A, B, C, P)
                 
@@ -272,10 +272,11 @@ class gl(object):
                 
                 z = A.z * w + B.z * v + C.z * u
 
-                if z > this.zbuffer[x][y]:
+                if z > this.zbuffer[y][x]:
                     this.cursorColor = color
                     this.absoluteVertex(x, y)
-                    this.zbuffer[x][y] = z
+
+                    this.zbuffer[y][x] = z
     
     def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
         return V3(
@@ -315,3 +316,45 @@ class gl(object):
 
         f.close()
         print('Image saved as ' + name)
+
+    def showZbuffer(this):
+        # Prints the pixels to the screen
+        f = open('zbuffer.bmp', 'bw')
+
+        # File header (14 bytes)
+        f.write(char('B'))
+        f.write(char('M'))
+        f.write(doubleword(14 + 40 + this.windowSize[0] * this.windowSize[1] * 3))
+        f.write(doubleword(0))
+        f.write(doubleword(14 + 40))
+
+        # Image header (40 bytes)
+        f.write(doubleword(40))
+        f.write(doubleword(this.windowSize[0]))
+        f.write(doubleword(this.windowSize[1]))
+        f.write(word(1))
+        f.write(word(24))
+        f.write(doubleword(0))
+        f.write(doubleword(this.windowSize[0] * this.windowSize[1] * 3))
+        f.write(doubleword(0))
+        f.write(doubleword(0))
+        f.write(doubleword(0))
+        f.write(doubleword(0))
+
+        zmax = max(max(this.zbuffer))
+
+        offsetX = int(this.imageSize[0] / 2) + this.offset[0]
+        offsetY = int(this.imageSize[1] / 2) + this.offset[1]
+
+        for y in range (0, this.windowSize[1]):
+            for x in range (0, this.windowSize[0]):
+                z = int((this.zbuffer[y - offsetY][x - offsetX] / zmax) * 255)
+
+                if z > 255:
+                    z = 255
+
+                toWrite = color(z, z, z)
+
+                f.write(toWrite)
+
+        f.close()
