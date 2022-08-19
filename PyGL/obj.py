@@ -1,19 +1,19 @@
 class obj(object):
-    def __init__(self, filename):
+    def __init__(this, filename):
         with open(filename) as f:
-            self.lines = f.read().splitlines()
+            this.lines = f.read().splitlines()
 
-        self.vertices = []
-        self.faces = []
-        self.read()
+        this.vertices = []
+        this.faces = []
+        this.read()
 
-    def read(self):
-        for line in self.lines:
+    def read(this):
+        for line in this.lines:
             if line:
                 prefix, value = line.split(' ', 1)
 
                 if prefix == 'v':
-                    self.vertices.append(list(map(float, value.split(' '))))
+                    this.vertices.append(list(map(float, value.split(' '))))
                 elif prefix == 'f':
-                    self.faces.append([list(map(int , face.split('/'))) for face in value.split(' ')])
+                    this.faces.append([list(map(int , face.split('/'))) for face in value.split(' ')])
 

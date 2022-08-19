@@ -22,47 +22,34 @@ class gl(object):
         this.pixels = []
         this.zbuffer = []
 
-        for y in range (0, this.windowSize[1]):
+        for y in range (0, this.windowSize[1] + 1):
             row = []
             bufferRow = []
 
-            for x in range (0, this.windowSize[0]):
+            for x in range (0, this.windowSize[0] + 1):
                 row.append(color(randint(0, 255), randint(0, 255), randint(0, 255)))
-                bufferRow.append(0)
+                bufferRow.append(-float('inf'))
 
             this.pixels.append(row)
             this.zbuffer.append(bufferRow)
 
-    def viewPort(this, x, y, width, height):
-        if not (-1 <= x <= 1) or not (-1 <= y <= 1):
-            raise Exception('Viewport offset must be between -1 and 1 (inclusive)')
-
+    def viewPort(this, offsetX, offsetY, width, height):
         if (width > this.windowSize[0]) or (height > this.windowSize[1]):
             raise Exception('Viewport size must be less than or equal to window size')
-
-        # Creates viewport with given dimensions and offset from center
-        offsetX = int((this.windowSize[0] - width) / 2)
-        offsetY = int((this.windowSize[1] - height) / 2)
-
-        offsetX = offsetX + (offsetX * x)
-        offsetY = offsetY + (offsetY * y)
 
         this.offset = [offsetX, offsetY]
         this.imageSize = [width, height]
 
-        for x in range (0, this.imageSize[0]):
-            for y in range (0, this.imageSize[1]):
+        for x in range (0, this.imageSize[0] + 1):
+            for y in range (0, this.imageSize[1] + 1):
                 this.pixels[y + offsetY][x + offsetX] = this.backgroundColor
 
     def clear(this):
         # Clears the viewport 
-        for x in range (0, this.imageSize[0]):
-            for y in range (0, this.imageSize[1]):
+        for x in range (0, this.imageSize[0] + 1):
+            for y in range (0, this.imageSize[1] + 1):
                 this.pixels[y + this.offset[1]][x + this.offset[0]] = this.backgroundColor
-
-        for x in range (0, this.imageSize[0]):
-            for y in range (0, this.imageSize[1]):
-                this.zbuffer[y][x] = 0
+                this.zbuffer[y][x] = -float('inf')
 
     def clearColor(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -72,25 +59,8 @@ class gl(object):
         this.backgroundColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def vertex(this, x, y):
-        if not (-1 <= x <= 1) or not (-1 <= y <= 1):
-            raise Exception('Vertex offset must be between -1 and 1 (inclusive)')
-
-        # Draws a pixel at the given coordinates
-        offsetX = (this.imageSize[0] / 2)
-        offsetY = (this.imageSize[1] / 2)
-
-        x = int(offsetX + (offsetX * x) + this.offset[0])
-        y = int(offsetY + (offsetY * y) + this.offset[1])
-
-        this.pixels[y][x] = this.cursorColor
-
-    def absoluteVertex(this, x, y):
-        # Draws a pixel at the given coordinates
-        offsetX = (this.imageSize[0] / 2)
-        offsetY = (this.imageSize[1] / 2)
-
-        x = int(offsetX + x + this.offset[0])
-        y = int(offsetY + y + this.offset[1])
+        x = int(x + this.offset[0])
+        y = int(y + this.offset[1])
 
         this.pixels[y][x] = this.cursorColor
 
@@ -102,15 +72,8 @@ class gl(object):
         this.cursorColor = color(int(r * 255), int(g * 255), int(b * 255))
 
     def line(this, x1, y1, x2, y2):
-        if not (-1 <= x1 <= 1) or not (-1 <= y1 <= 1) or not (-1 <= x2 <= 1) or not (-1 <= y2 <= 1):
-            raise Exception('Line offset must be between -1 and 1 (inclusive)')
-
-        x1 = int(x1 * this.imageSize[0] / 2)
-        y1 = int(y1 * this.imageSize[1] / 2)
-        x2 = int(x2 * this.imageSize[0] / 2)
-        y2 = int(y2 * this.imageSize[1] / 2)
-
-        dy, dx = abs(y2 - y1), abs(x2 - x1)
+        dy = abs(y2 - y1)
+        dx = abs(x2 - x1)
     
         offset = 0
         threshold = dx
@@ -121,7 +84,8 @@ class gl(object):
             x1, y1 = y1, x1
             x2, y2 = y2, x2
 
-            dy, dx = abs(y2 - y1), abs(x2 - x1)
+            dy = abs(y2 - y1)
+            dx = abs(x2 - x1)
 
         if x1 > x2:
             x1, x2 = x2, x1
@@ -131,9 +95,9 @@ class gl(object):
 
         for x in range(x1, x2 + 1):
             if steep:
-                gl.vertex(this, y / (this.imageSize[1] / 2), x /(this.imageSize[0] / 2))
+                gl.vertex(this, y, x)
             else:
-                gl.vertex(this, x / (this.imageSize[0] / 2), y /(this.imageSize[1] / 2))
+                gl.vertex(this, x, y)
             
             offset += dy
             if offset >= threshold:
@@ -149,10 +113,10 @@ class gl(object):
             x1, y1 = lines[i % len(lines)].split(', ')
             x2, y2 = lines[(i + 1) % len(lines)].split(', ')
 
-            x1 = (float(x1) - this.imageSize[0] / 2) / (this.imageSize[0] / 2)
-            y1 = (float(y1) - this.imageSize[1] / 2) / (this.imageSize[1] / 2)
-            x2 = (float(x2) - this.imageSize[0] / 2) / (this.imageSize[0] / 2)
-            y2 = (float(y2) - this.imageSize[1] / 2) / (this.imageSize[1] / 2)
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
 
             this.line(x1, y1, x2, y2)
 
@@ -274,16 +238,16 @@ class gl(object):
 
                 if z > this.zbuffer[y][x]:
                     this.cursorColor = color
-                    this.absoluteVertex(x, y)
+                    this.vertex(x, y)
 
-                    this.zbuffer[y][x] = z
+                    this.zbuffer[y + this.offset[1]][x + this.offset[0]] = z
     
-    def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+    def transform(this, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
         return V3(
             round((vertex[0] + translate[0]) * scale[0]),
             round((vertex[1] + translate[1]) * scale[1]),
             round((vertex[2] + translate[2]) * scale[2])
-    )
+        )
 
     def finish(this, name):
         # Prints the pixels to the screen
@@ -343,18 +307,19 @@ class gl(object):
 
         zmax = max(max(this.zbuffer))
 
-        offsetX = int(this.imageSize[0] / 2) + this.offset[0]
-        offsetY = int(this.imageSize[1] / 2) + this.offset[1]
-
         for y in range (0, this.windowSize[1]):
             for x in range (0, this.windowSize[0]):
-                z = int((this.zbuffer[y - offsetY][x - offsetX] / zmax) * 255)
+                if (this.zbuffer[y][x] == -float('inf')):
+                    z = 0
+                else:
+                    z = int((this.zbuffer[y][x] / zmax) * 255)
 
-                if z > 255:
+                if z > 255: 
                     z = 255
 
-                toWrite = color(z, z, z)
+                if z < 0:
+                    z = 0
 
-                f.write(toWrite)
+                f.write(color(z, z, z))
 
         f.close()
