@@ -1,9 +1,10 @@
 from PyGL.utils import *
 from PyGL.obj import obj
+from PyGL.texture import texture
 from random import randint
 
 class gl(object):
-    def init(this):
+    def __init__(this):
         this.windowSize = [None, None]
         this.imageSize = [None, None]
         this.offset = [None, None]
@@ -155,7 +156,7 @@ class gl(object):
                             this.pixels[y][num] = this.cursorColor
                 fill = []
 
-    def load(this, filename, translate, scale):
+    def load(this, filename, translate, scale, texture = None):
         model = obj(filename)
 
         light = V3(0,0,1)
@@ -189,12 +190,23 @@ class gl(object):
 
                 normal = norm (cross(sub(b, a), sub(c, a)))
                 intensity = dot(normal, light)
-                colorTransparency = round(255 * intensity)
 
-                if intensity < 0:
-                    colorTransparency = 0
+                if not texture:
+                    colorTransparency = round(255 * intensity)
 
-                this.triangle(a, b, c, color(colorTransparency, colorTransparency, colorTransparency))
+                    if colorTransparency < 0:
+                        colorTransparency = 0
+
+                    this.triangle(a, b, c, color(colorTransparency, colorTransparency, colorTransparency))
+                else:
+                    t1 = face[0][1] - 1
+                    t2 = face[1][1] - 1
+                    t3 = face[2][1] - 1
+                    tA = V3(*model.tvertices[t1])
+                    tB = V3(*model.tvertices[t2])
+                    tC = V3(*model.tvertices[t3])
+
+                    this.triangle(a, b, c, None, texture, (tA, tB, tC), intensity)
 
             elif count == 4:
                 f1 = face[0][0] - 1
@@ -211,19 +223,32 @@ class gl(object):
 
                 normal = norm (cross(sub(vertices[1], vertices[0]), sub(vertices[2], vertices[0])))
                 intensity = dot(normal, light)
-
-                colorTransparency = round(255 * intensity)
-
-                if colorTransparency < 0:
-                    colorTransparency = 0
                 
                 A, B, C, D = vertices
 
-                this.triangle(A, B, C, color(colorTransparency, colorTransparency, colorTransparency))
-                this.triangle(A, C, D, color(colorTransparency, colorTransparency, colorTransparency))
+                if not texture:
+                    colorTransparency = round(255 * intensity)
+                    if colorTransparency < 0:
+                        colorTransparency = 0
+
+                    this.triangle(A, B, C, color(colorTransparency, colorTransparency, colorTransparency))
+                    this.triangle(A, C, D, color(colorTransparency, colorTransparency, colorTransparency))            
+                else:
+                    t1 = face[0][1] - 1
+                    t2 = face[1][1] - 1
+                    t3 = face[2][1] - 1
+                    t4 = face[3][1] - 1
+                    
+                    tA = V3(*model.tvertices[t1])
+                    tB = V3(*model.tvertices[t2])
+                    tC = V3(*model.tvertices[t3])
+                    tD = V3(*model.tvertices[t4])
+                    
+                    this.triangle(A, B, C, None, texture, (tA, tB, tC), intensity)
+                    this.triangle(A, C, D, None, texture, (tA, tC, tD), intensity)
 
 
-    def triangle(this, A, B, C, color = None):
+    def triangle(this, A, B, C, color = None, texture = None, position = None, intensity = 1):
         xmin, xmax, ymin, ymax = bbox(A, B, C)
 
         for y in range(ymin, ymax + 1):
@@ -233,6 +258,13 @@ class gl(object):
                 
                 if w < 0 or v < 0 or u < 0:
                     continue
+        
+                if texture:
+                    tA, tB, tC = position
+                    tx = tA.x * w + tB.x * v + tC.x * u
+                    ty = tA.y * w + tB.y * v + tC.y * u
+                    
+                    color = texture.getColor(tx, ty, intensity)
                 
                 z = A.z * w + B.z * v + C.z * u
 

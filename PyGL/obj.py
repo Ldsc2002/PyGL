@@ -5,6 +5,7 @@ class obj(object):
 
         this.vertices = []
         this.faces = []
+        this.tvertices = []
         this.read()
 
     def read(this):
@@ -16,4 +17,6 @@ class obj(object):
                     this.vertices.append(list(map(float, value.split(' '))))
                 elif prefix == 'f':
                     this.faces.append([list(map(int , face.split('/'))) for face in value.split(' ')])
+                elif prefix == 'vt':
+                    this.tvertices.append(list(map(float, value.split(' ')))) 
 
