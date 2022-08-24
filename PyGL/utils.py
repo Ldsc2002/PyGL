@@ -71,3 +71,38 @@ def doubleword(d):
 
 def color(r, g, b):
     return bytes([b, g, r])
+
+def writeBMP(pixels, name):
+    # Prints the pixels to the screen
+    width = len(pixels)
+    height = len(pixels[0])
+    
+    name  = name + '.bmp'
+    f = open(name, 'bw')
+
+    # File header (14 bytes)
+    f.write(char('B'))
+    f.write(char('M'))
+    f.write(doubleword(14 + 40 + width * height * 3))
+    f.write(doubleword(0))
+    f.write(doubleword(14 + 40))
+
+    # Image header (40 bytes)
+    f.write(doubleword(40))
+    f.write(doubleword(width))
+    f.write(doubleword(height))
+    f.write(word(1))
+    f.write(word(24))
+    f.write(doubleword(0))
+    f.write(doubleword(width * height * 3))
+    f.write(doubleword(0))
+    f.write(doubleword(0))
+    f.write(doubleword(0))
+    f.write(doubleword(0))
+
+    for y in range (0, height):
+        for x in range (0, width):
+            f.write(pixels[y][x])
+
+    f.close()
+    print('Image saved as ' + name)

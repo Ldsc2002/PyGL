@@ -23,11 +23,11 @@ class gl(object):
         this.pixels = []
         this.zbuffer = []
 
-        for y in range (0, this.windowSize[1] + 1):
+        for y in range (0, this.windowSize[1]):
             row = []
             bufferRow = []
 
-            for x in range (0, this.windowSize[0] + 1):
+            for x in range (0, this.windowSize[0]):
                 row.append(color(randint(0, 255), randint(0, 255), randint(0, 255)))
                 bufferRow.append(-float('inf'))
 
@@ -41,14 +41,14 @@ class gl(object):
         this.offset = [offsetX, offsetY]
         this.imageSize = [width, height]
 
-        for x in range (0, this.imageSize[0] + 1):
-            for y in range (0, this.imageSize[1] + 1):
+        for x in range (0, this.imageSize[0]):
+            for y in range (0, this.imageSize[1]):
                 this.pixels[y + offsetY][x + offsetX] = this.backgroundColor
 
     def clear(this):
         # Clears the viewport 
-        for x in range (0, this.imageSize[0] + 1):
-            for y in range (0, this.imageSize[1] + 1):
+        for x in range (0, this.imageSize[0]):
+            for y in range (0, this.imageSize[1]):
                 this.pixels[y + this.offset[1]][x + this.offset[0]] = this.backgroundColor
                 this.zbuffer[y][x] = -float('inf')
 
@@ -94,7 +94,7 @@ class gl(object):
 
         y = y1
 
-        for x in range(x1, x2 + 1):
+        for x in range(x1, x2):
             if steep:
                 gl.vertex(this, y, x)
             else:
@@ -282,64 +282,14 @@ class gl(object):
         )
 
     def finish(this, name):
-        # Prints the pixels to the screen
-        name  = name + '.bmp'
-        f = open(name, 'bw')
+        writeBMP(this.pixels, name)
 
-        # File header (14 bytes)
-        f.write(char('B'))
-        f.write(char('M'))
-        f.write(doubleword(14 + 40 + this.windowSize[0] * this.windowSize[1] * 3))
-        f.write(doubleword(0))
-        f.write(doubleword(14 + 40))
-
-        # Image header (40 bytes)
-        f.write(doubleword(40))
-        f.write(doubleword(this.windowSize[0]))
-        f.write(doubleword(this.windowSize[1]))
-        f.write(word(1))
-        f.write(word(24))
-        f.write(doubleword(0))
-        f.write(doubleword(this.windowSize[0] * this.windowSize[1] * 3))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-
-        for y in range (0, this.windowSize[1]):
-            for x in range (0, this.windowSize[0]):
-                f.write(this.pixels[y][x])
-
-        f.close()
-        print('Image saved as ' + name)
-
-    def showZbuffer(this):
-        # Prints the pixels to the screen
-        f = open('zbuffer.bmp', 'bw')
-
-        # File header (14 bytes)
-        f.write(char('B'))
-        f.write(char('M'))
-        f.write(doubleword(14 + 40 + this.windowSize[0] * this.windowSize[1] * 3))
-        f.write(doubleword(0))
-        f.write(doubleword(14 + 40))
-
-        # Image header (40 bytes)
-        f.write(doubleword(40))
-        f.write(doubleword(this.windowSize[0]))
-        f.write(doubleword(this.windowSize[1]))
-        f.write(word(1))
-        f.write(word(24))
-        f.write(doubleword(0))
-        f.write(doubleword(this.windowSize[0] * this.windowSize[1] * 3))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-        f.write(doubleword(0))
-
+    def showZbuffer(this, name):
+        zbuffer = []
         zmax = max(max(this.zbuffer))
 
         for y in range (0, this.windowSize[1]):
+            bufferRow = []
             for x in range (0, this.windowSize[0]):
                 if (this.zbuffer[y][x] == -float('inf')):
                     z = 0
@@ -352,6 +302,7 @@ class gl(object):
                 if z < 0:
                     z = 0
 
-                f.write(color(z, z, z))
+                bufferRow.append(color(z, z, z))
+            zbuffer.append(bufferRow)
 
-        f.close()
+        writeBMP(zbuffer, 'zbuffer_' + name)
