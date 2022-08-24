@@ -10,6 +10,7 @@ class gl(object):
         this.offset = [None, None]
         this.pixels = []
         this.zbuffer = []
+        this.light = V3(0, 0, 1)
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -64,6 +65,9 @@ class gl(object):
         y = int(y + this.offset[1])
 
         this.pixels[y][x] = this.cursorColor
+
+    def setLight(this, x, y, z):
+        this.light = V3(x, y, z)
 
     def color(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
@@ -158,8 +162,6 @@ class gl(object):
 
     def load(this, filename, translate, scale, texture = None):
         model = obj(filename)
-
-        light = V3(0,0,1)
         
         for face in model.faces:
             count = len(face)
@@ -189,7 +191,7 @@ class gl(object):
                 c = this.transform(model.vertices[f3], translate, scale)
 
                 normal = norm (cross(sub(b, a), sub(c, a)))
-                intensity = dot(normal, light)
+                intensity = dot(normal, this.light)
 
                 if not texture:
                     colorTransparency = round(255 * intensity)
@@ -222,7 +224,7 @@ class gl(object):
                 ]
 
                 normal = norm (cross(sub(vertices[1], vertices[0]), sub(vertices[2], vertices[0])))
-                intensity = dot(normal, light)
+                intensity = dot(normal, this.light)
                 
                 A, B, C, D = vertices
 
