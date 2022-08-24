@@ -194,12 +194,12 @@ class gl(object):
                 intensity = dot(normal, this.light)
 
                 if not texture:
-                    colorTransparency = round(255 * intensity)
+                    colorIntensity = round(255 * intensity)
 
-                    if colorTransparency < 0:
-                        colorTransparency = 0
+                    if colorIntensity < 0:
+                        colorIntensity = 0
 
-                    this.triangle(a, b, c, color(colorTransparency, colorTransparency, colorTransparency))
+                    this.triangle(a, b, c, color(colorIntensity, colorIntensity, colorIntensity))
                 else:
                     t1 = face[0][1] - 1
                     t2 = face[1][1] - 1
@@ -229,12 +229,12 @@ class gl(object):
                 A, B, C, D = vertices
 
                 if not texture:
-                    colorTransparency = round(255 * intensity)
-                    if colorTransparency < 0:
-                        colorTransparency = 0
+                    colorIntensity = round(255 * intensity)
+                    if colorIntensity < 0:
+                        colorIntensity = 0
 
-                    this.triangle(A, B, C, color(colorTransparency, colorTransparency, colorTransparency))
-                    this.triangle(A, C, D, color(colorTransparency, colorTransparency, colorTransparency))            
+                    this.triangle(A, B, C, color(colorIntensity, colorIntensity, colorIntensity))
+                    this.triangle(A, C, D, color(colorIntensity, colorIntensity, colorIntensity))            
                 else:
                     t1 = face[0][1] - 1
                     t2 = face[1][1] - 1
@@ -290,6 +290,7 @@ class gl(object):
         zbuffer = []
         zmax = max(max(this.zbuffer))
 
+        # Convert zbuffer to color values
         for y in range (0, this.windowSize[1]):
             bufferRow = []
             for x in range (0, this.windowSize[0]):
@@ -298,6 +299,7 @@ class gl(object):
                 else:
                     z = int((this.zbuffer[y][x] / zmax) * 255)
 
+                # Shouldn't be necessary, but it's here just in case
                 if z > 255: 
                     z = 255
 
