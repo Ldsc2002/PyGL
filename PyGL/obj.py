@@ -12,6 +12,7 @@ class obj(object):
         for line in this.lines:
             if line:
                 prefix, value = line.split(' ', 1)
+                value = value.strip()
 
                 if prefix == 'v':
                     this.vertices.append(list(map(float, value.split(' '))))
