@@ -3,6 +3,10 @@ from PyGL.obj import obj
 from PyGL.texture import texture
 from random import randint
 
+# TODO move to utils
+from numpy import matrix
+from math import cos, sin
+
 class gl(object):
     def __init__(this):
         this.windowSize = [None, None]
@@ -11,6 +15,7 @@ class gl(object):
         this.pixels = []
         this.zbuffer = []
         this.light = V3(0, 0, 1)
+        this.model = None
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -160,8 +165,52 @@ class gl(object):
                             this.pixels[y][num] = this.cursorColor
                 fill = []
 
-    def load(this, filename, translate, scale, texture = None):
+    def loadMatrix(this, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0)):
+        translate = V3(*translate)
+        scale = V3(*scale)
+        rotate = V3(*rotate)
+        
+        translateMatrix = matrix([
+            [1, 0, 0, translate.x],
+            [0, 1, 0, translate.y],
+            [0, 0, 1, translate.z],
+            [0, 0, 0, 1]
+        ])
+
+        scaleMatrix = matrix([
+            [scale.x, 0, 0, 0],
+            [0, scale.y, 0, 0],
+            [0, 0, scale.z, 0],
+            [0, 0, 0, 1]
+        ])
+
+        rotateXMatrix = matrix([
+            [1, 0, 0, 0],
+            [0, cos(rotate.x), -sin(rotate.x), 0],
+            [0, sin(rotate.x), cos(rotate.x), 0],
+            [0, 0, 0, 1]
+        ])
+
+        rotateYMatrix = matrix([
+            [cos(rotate.y), 0, sin(rotate.y), 0],
+            [0, 1, 0, 0],
+            [-sin(rotate.y), 0, cos(rotate.y), 0],
+            [0, 0, 0, 1]
+        ])
+
+        rotateZMatrix = matrix([
+            [cos(rotate.z), -sin(rotate.z), 0, 0],
+            [sin(rotate.z), cos(rotate.z), 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ])
+
+        rotateMatrix = rotateXMatrix @ rotateYMatrix @ rotateZMatrix
+        this.model = translateMatrix @ scaleMatrix @ rotateMatrix
+
+    def load(this, filename, translate, scale, rotate, texture = None):
         model = obj(filename)
+        this.loadMatrix(translate, scale, rotate)
         
         for face in model.faces:
             count = len(face)
@@ -186,9 +235,9 @@ class gl(object):
                 f2 = face[1][0] - 1
                 f3 = face[2][0] - 1
 
-                a = this.transform(model.vertices[f1], translate, scale)
-                b = this.transform(model.vertices[f2], translate, scale)
-                c = this.transform(model.vertices[f3], translate, scale)
+                a = this.transform(model.vertices[f1])
+                b = this.transform(model.vertices[f2])
+                c = this.transform(model.vertices[f3])
 
                 normal = norm (cross(sub(b, a), sub(c, a)))
                 intensity = dot(normal, this.light)
@@ -217,10 +266,10 @@ class gl(object):
                 f4 = face[3][0] - 1
 
                 vertices = [
-                    this.transform(model.vertices[f1], translate, scale),
-                    this.transform(model.vertices[f2], translate, scale),
-                    this.transform(model.vertices[f3], translate, scale),
-                    this.transform(model.vertices[f4], translate, scale)
+                    this.transform(model.vertices[f1]),
+                    this.transform(model.vertices[f2]),
+                    this.transform(model.vertices[f3]),
+                    this.transform(model.vertices[f4])
                 ]
 
                 normal = norm (cross(sub(vertices[1], vertices[0]), sub(vertices[2], vertices[0])))
@@ -252,6 +301,7 @@ class gl(object):
 
     def triangle(this, A, B, C, color = None, texture = None, position = None, intensity = 1):
         xmin, xmax, ymin, ymax = bbox(A, B, C)
+        xmin, xmax, ymin, ymax = int(xmin), int(xmax), int(ymin), int(ymax)
 
         for y in range(ymin, ymax + 1):
             for x in range(xmin, xmax + 1):
@@ -276,11 +326,15 @@ class gl(object):
 
                     this.zbuffer[y + this.offset[1]][x + this.offset[0]] = z
     
-    def transform(this, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+    def transform(this, vertex):
+        augmentedVertex = V4(vertex[0], vertex[1], vertex[2], 1)
+        transformedVertex = this.model @ augmentedVertex
+        transformedVertex = V4(*transformedVertex.tolist()[0])
+
         return V3(
-            round((vertex[0] + translate[0]) * scale[0]),
-            round((vertex[1] + translate[1]) * scale[1]),
-            round((vertex[2] + translate[2]) * scale[2])
+            transformedVertex.x / transformedVertex.w,
+            transformedVertex.y / transformedVertex.w,
+            transformedVertex.z / transformedVertex.w
         )
 
     def finish(this, name):
