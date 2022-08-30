@@ -16,6 +16,7 @@ class gl(object):
         this.zbuffer = []
         this.light = V3(0, 0, 1)
         this.model = None
+        this.viewMatrix = None
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -69,7 +70,8 @@ class gl(object):
         x = int(x + this.offset[0])
         y = int(y + this.offset[1])
 
-        this.pixels[y][x] = this.cursorColor
+        if (x > 0 and y > 0):
+            this.pixels[y][x] = this.cursorColor
 
     def setLight(this, x, y, z):
         this.light = V3(x, y, z)
@@ -206,7 +208,7 @@ class gl(object):
         ])
 
         rotateMatrix = rotateXMatrix @ rotateYMatrix @ rotateZMatrix
-        this.model = translateMatrix @ scaleMatrix @ rotateMatrix
+        this.model = translateMatrix @ scaleMatrix @ rotateMatrix @ this.viewMatrix
 
     def load(this, filename, translate, scale, rotate, texture = None):
         model = obj(filename)
@@ -320,11 +322,12 @@ class gl(object):
                 
                 z = A.z * w + B.z * v + C.z * u
 
-                if z > this.zbuffer[y][x]:
-                    this.cursorColor = color
-                    this.vertex(x, y)
+                if y < len(this.zbuffer) and x < len(this.zbuffer[y]):
+                    if z > this.zbuffer[y][x]:
+                        this.cursorColor = color
+                        this.vertex(x, y)
 
-                    this.zbuffer[y + this.offset[1]][x + this.offset[0]] = z
+                        this.zbuffer[y + this.offset[1]][x + this.offset[0]] = z
     
     def transform(this, vertex):
         augmentedVertex = V4(vertex[0], vertex[1], vertex[2], 1)
@@ -336,6 +339,34 @@ class gl(object):
             transformedVertex.y / transformedVertex.w,
             transformedVertex.z / transformedVertex.w
         )
+
+    def lookAt(this, eye, center, up):
+        eye = V3(*eye)
+        center = V3(*center)
+        up = V3(*up)
+
+        z = norm(sub(eye, center))
+        x = norm(cross(up, z))
+        y = norm(cross(z, x))
+
+        this.loadViewMatrix(x, y, z, center)
+
+    def loadViewMatrix(this, x, y, z, center):
+        inverse = matrix([
+            [x.x, x.y, x.z, 0],
+            [y.x, y.y, y.z, 0],
+            [z.x, z.y, z.z, 0],
+            [0, 0, 0, 1]
+        ])
+
+        primeO = matrix([
+            [1, 0, 0, -center.x],
+            [0, 1, 0, -center.y],
+            [0, 0, 1, -center.z],
+            [0, 0, 0, 1]
+        ])
+        
+        this.viewMatrix = inverse @ primeO
 
     def finish(this, name):
         writeBMP(this.pixels, name)
