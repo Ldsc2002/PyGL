@@ -17,6 +17,8 @@ class gl(object):
         this.light = V3(0, 0, 1)
         this.model = None
         this.viewMatrix = None
+        this.projectionMatrix = None
+        this.viewPortMatrix = None
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -208,7 +210,7 @@ class gl(object):
         ])
 
         rotateMatrix = rotateXMatrix @ rotateYMatrix @ rotateZMatrix
-        this.model = translateMatrix @ scaleMatrix @ rotateMatrix @ this.viewMatrix
+        this.model = translateMatrix @ scaleMatrix @ rotateMatrix
 
     def load(this, filename, translate, scale, rotate, texture = None):
         model = obj(filename)
@@ -322,7 +324,7 @@ class gl(object):
                 
                 z = A.z * w + B.z * v + C.z * u
 
-                if y < len(this.zbuffer) and x < len(this.zbuffer[y]):
+                if y < len(this.zbuffer) - 1 and x < len(this.zbuffer[0]) - 1 and x >= 0 and y >= 0:
                     if z > this.zbuffer[y][x]:
                         this.cursorColor = color
                         this.vertex(x, y)
@@ -331,7 +333,7 @@ class gl(object):
     
     def transform(this, vertex):
         augmentedVertex = V4(vertex[0], vertex[1], vertex[2], 1)
-        transformedVertex = this.model @ augmentedVertex
+        transformedVertex = this.model @ augmentedVertex @ this.viewMatrix @ this.projectionMatrix @ this.viewPortMatrix 
         transformedVertex = V4(*transformedVertex.tolist()[0])
 
         return V3(
@@ -349,7 +351,9 @@ class gl(object):
         x = norm(cross(up, z))
         y = norm(cross(z, x))
 
+        this.loadProjectionMatrix(eye, center)
         this.loadViewMatrix(x, y, z, center)
+        this.loadViewPortMatrix()
 
     def loadViewMatrix(this, x, y, z, center):
         inverse = matrix([
@@ -367,6 +371,29 @@ class gl(object):
         ])
         
         this.viewMatrix = inverse @ primeO
+
+    def loadProjectionMatrix(this, eye, center):
+        c = -1 / length(sub(eye, center))
+        
+        this.projectionMatrix = matrix([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, c, 1]
+        ])
+
+    def loadViewPortMatrix(this):
+        x = 0
+        y = 0
+        w = len(this.pixels)
+        h = len(this.pixels[0])
+
+        this.viewPortMatrix = matrix([
+            [w, 0, 0, x + w],
+            [0, h, 0, y + h],
+            [0, 0, 128, 128],
+            [0, 0, 0, 1]
+        ])
 
     def finish(this, name):
         writeBMP(this.pixels, name)
