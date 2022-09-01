@@ -1,10 +1,8 @@
+from sympy import product
 from PyGL.utils import *
 from PyGL.obj import obj
 from PyGL.texture import texture
 from random import randint
-
-# TODO move to utils
-from numpy import matrix
 
 class gl(object):
     def __init__(this):
@@ -173,43 +171,43 @@ class gl(object):
         scale = V3(*scale)
         rotate = V3(*rotate)
         
-        translateMatrix = matrix([
+        translateMatrix = [
             [1, 0, 0, translate.x],
             [0, 1, 0, translate.y],
             [0, 0, 1, translate.z],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        scaleMatrix = matrix([
+        scaleMatrix = [
             [scale.x, 0, 0, 0],
             [0, scale.y, 0, 0],
             [0, 0, scale.z, 0],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        rotateXMatrix = matrix([
+        rotateXMatrix = [
             [1, 0, 0, 0],
             [0, cos(rotate.x), -sin(rotate.x), 0],
             [0, sin(rotate.x), cos(rotate.x), 0],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        rotateYMatrix = matrix([
+        rotateYMatrix = [
             [cos(rotate.y), 0, sin(rotate.y), 0],
             [0, 1, 0, 0],
             [-sin(rotate.y), 0, cos(rotate.y), 0],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        rotateZMatrix = matrix([
+        rotateZMatrix = [
             [cos(rotate.z), -sin(rotate.z), 0, 0],
             [sin(rotate.z), cos(rotate.z), 0, 0],
             [0, 0, 1, 0],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        rotateMatrix = rotateXMatrix @ rotateYMatrix @ rotateZMatrix
-        this.model = translateMatrix @ scaleMatrix @ rotateMatrix
+        rotateMatrix = productMatrix(productMatrix(rotateXMatrix, rotateYMatrix), rotateZMatrix)
+        this.model = productMatrix(productMatrix(translateMatrix, scaleMatrix), rotateMatrix)
 
     def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None):
         model = obj(filename)
@@ -332,8 +330,13 @@ class gl(object):
     
     def transform(this, vertex):
         augmentedVertex = V4(vertex[0], vertex[1], vertex[2], 1)
-        transformedVertex = this.viewPortMatrix @ this.projectionMatrix @ this.viewMatrix @ this.model @ augmentedVertex
-        transformedVertex = V4(*transformedVertex.tolist()[0])
+
+        res1 = productMatrixVector(this.model, augmentedVertex)
+        res2 = productMatrixVector(this.viewMatrix, res1)
+        res3 = productMatrixVector(this.projectionMatrix, res2)
+        transformedVertex = productMatrixVector(this.viewPortMatrix, res3)
+
+        transformedVertex = V4(*transformedVertex)
 
         print(transformedVertex)
 
@@ -357,42 +360,42 @@ class gl(object):
         this.loadViewPortMatrix()
 
     def loadViewMatrix(this, x, y, z, center):
-        inverse = matrix([
+        inverse = [
             [x.x, x.y, x.z, 0],
             [y.x, y.y, y.z, 0],
             [z.x, z.y, z.z, 0],
             [0, 0, 0, 1]
-        ])
+        ]
 
-        primeO = matrix([
+        primeO = [
             [1, 0, 0, -center.x],
             [0, 1, 0, -center.y],
             [0, 0, 1, -center.z],
             [0, 0, 0, 1]
-        ])
+        ]
         
-        this.viewMatrix = inverse @ primeO
+        this.viewMatrix = productMatrix(inverse, primeO)
 
     def loadProjectionMatrix(this, eye, center):
         c = -1 / length(sub(eye, center))
         
-        this.projectionMatrix = matrix([
+        this.projectionMatrix = [
             [1, 0, 0, 0],
             [0, 1, 0, 0],
             [0, 0, 1, 0],
             [0, 0, c, 1]
-        ])
+        ]
 
     def loadViewPortMatrix(this):
         w = len(this.pixels)
         h = len(this.pixels[0])
 
-        this.viewPortMatrix = matrix([
+        this.viewPortMatrix = [
             [w / 2, 0, 0, w / 2],
             [0, h / 2, 0, h / 2],
             [0, 0, 128, 128],
             [0, 0, 0, 1]
-        ])
+        ]
 
     def finish(this, name):
         writeBMP(this.pixels, name)
