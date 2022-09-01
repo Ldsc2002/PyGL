@@ -5,7 +5,6 @@ from random import randint
 
 # TODO move to utils
 from numpy import matrix
-from math import cos, sin
 
 class gl(object):
     def __init__(this):
@@ -212,7 +211,7 @@ class gl(object):
         rotateMatrix = rotateXMatrix @ rotateYMatrix @ rotateZMatrix
         this.model = translateMatrix @ scaleMatrix @ rotateMatrix
 
-    def load(this, filename, translate, scale, rotate, texture = None):
+    def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None):
         model = obj(filename)
         this.loadMatrix(translate, scale, rotate)
         
@@ -333,8 +332,10 @@ class gl(object):
     
     def transform(this, vertex):
         augmentedVertex = V4(vertex[0], vertex[1], vertex[2], 1)
-        transformedVertex = this.model @ augmentedVertex @ this.viewMatrix @ this.projectionMatrix @ this.viewPortMatrix 
+        transformedVertex = this.viewPortMatrix @ this.projectionMatrix @ this.viewMatrix @ this.model @ augmentedVertex
         transformedVertex = V4(*transformedVertex.tolist()[0])
+
+        print(transformedVertex)
 
         return V3(
             transformedVertex.x / transformedVertex.w,
@@ -383,14 +384,12 @@ class gl(object):
         ])
 
     def loadViewPortMatrix(this):
-        x = 0
-        y = 0
         w = len(this.pixels)
         h = len(this.pixels[0])
 
         this.viewPortMatrix = matrix([
-            [w, 0, 0, x + w],
-            [0, h, 0, y + h],
+            [w / 2, 0, 0, w / 2],
+            [0, h / 2, 0, h / 2],
             [0, 0, 128, 128],
             [0, 0, 0, 1]
         ])
