@@ -338,8 +338,6 @@ class gl(object):
 
         transformedVertex = V4(*transformedVertex)
 
-        print(transformedVertex)
-
         return V3(
             transformedVertex.x / transformedVertex.w,
             transformedVertex.y / transformedVertex.w,
