@@ -1,4 +1,3 @@
-from sympy import product
 from PyGL.utils import *
 from PyGL.obj import obj
 from PyGL.texture import texture
