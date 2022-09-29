@@ -5,6 +5,7 @@ from math import cos, sin
 V2 = namedtuple('Point2D', ['x', 'y'])
 V3 = namedtuple('Point3D', ['x', 'y', 'z'])
 V4 = namedtuple('Point4D', ['x', 'y', 'z', 'w'])
+pi = 3.1415926535897932
 
 def sumV3(v0, v1):
     return V3(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z)
@@ -83,7 +84,7 @@ def doubleword(d):
     return struct.pack('=l', d)
 
 def color(r, g, b):
-    return bytes([b, g, r])
+    return bytes([int(b), int(g), int(r)])
 
 def writeBMP(pixels, name):
     # Prints the pixels to the screen

@@ -1,7 +1,11 @@
+from email.mime import image
 from PyGL.utils import *
 from PyGL.obj import obj
 from PyGL.texture import texture
-from random import randint
+from random import randint, uniform
+
+BLACK = 0, 0, 0
+BLUE = 0, 0, 255
 
 class gl(object):
     def __init__(this):
@@ -15,6 +19,8 @@ class gl(object):
         this.viewMatrix = None
         this.projectionMatrix = None
         this.viewPortMatrix = None
+        this.activeShader = None
+        this.activeTexture = None
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -74,7 +80,7 @@ class gl(object):
     def setLight(this, x, y, z):
         this.light = V3(x, y, z)
 
-    def color(this, r, g, b):
+    def setColor(this, r, g, b):
         if not (0 <= r <= 1) or not (0 <= g <= 1) or not (0 <= b <= 1):
             raise Exception('Color value must be between 0 and 1 (inclusive)')
 
@@ -208,10 +214,12 @@ class gl(object):
         rotateMatrix = productMatrix(productMatrix(rotateXMatrix, rotateYMatrix), rotateZMatrix)
         this.model = productMatrix(productMatrix(translateMatrix, scaleMatrix), rotateMatrix)
 
-    def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None):
+    def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None, shader = None):
         model = obj(filename)
         this.loadMatrix(translate, scale, rotate)
-        
+        this.activeShader = shader
+        this.activeTexture = texture
+
         for face in model.faces:
             count = len(face)
 
@@ -257,7 +265,20 @@ class gl(object):
                     tB = V3(*model.tvertices[t2])
                     tC = V3(*model.tvertices[t3])
 
-                    this.triangle(a, b, c, None, texture, (tA, tB, tC), intensity)
+                    tn1 = face[0][2] - 1
+                    tn2 = face[1][2] - 1
+                    tn3 = face[2][2] - 1
+
+                    try:
+                        tnA = V3(*model.nvertices[tn1])
+                        tnB = V3(*model.nvertices[tn2])
+                        tnC = V3(*model.nvertices[tn3])
+                    except:
+                        tnA = V3(0, 0, 0)
+                        tnB = V3(0, 0, 0)
+                        tnC = V3(0, 0, 0)
+
+                    this.triangle(a, b, c, None, texture, (tA, tB, tC), (tnA,tnB,tnC), intensity)
 
             elif count == 4:
                 f1 = face[0][0] - 1
@@ -294,12 +315,27 @@ class gl(object):
                     tB = V3(*model.tvertices[t2])
                     tC = V3(*model.tvertices[t3])
                     tD = V3(*model.tvertices[t4])
+
+                    tn1 = face[0][2] - 1
+                    tn2 = face[1][2] - 1
+                    tn3 = face[2][2] - 1
+                    tn4 = face[3][2] - 1
                     
-                    this.triangle(A, B, C, None, texture, (tA, tB, tC), intensity)
-                    this.triangle(A, C, D, None, texture, (tA, tC, tD), intensity)
+                    try:
+                        tnA = V3(*model.nvertices[tn1])
+                        tnB = V3(*model.nvertices[tn2])
+                        tnC = V3(*model.nvertices[tn3])
+                        tnD = V3(*model.nvertices[tn4])
+                    except:
+                        tnA = V3(0, 0, 0)
+                        tnB = V3(0, 0, 0)
+                        tnC = V3(0, 0, 0)
+                        tnD = V3(0, 0, 0)
+                    
+                    this.triangle(A, B, C, None, texture, (tA, tB, tC), (tnA, tnB, tnC), intensity)
+                    this.triangle(A, C, D, None, texture, (tA, tC, tD), (tnA, tnC, tnD), intensity)
 
-
-    def triangle(this, A, B, C, color = None, texture = None, position = None, intensity = 1):
+    def triangle(this, A, B, C, color = None, texture = None, position = (0, 0, 0), normals = (0, 0, 0), intensity = 1):
         xmin, xmax, ymin, ymax = bbox(A, B, C)
         xmin, xmax, ymin, ymax = int(xmin), int(xmax), int(ymin), int(ymax)
 
@@ -311,20 +347,25 @@ class gl(object):
                 if w < 0 or v < 0 or u < 0:
                     continue
         
-                if texture:
-                    tA, tB, tC = position
-                    tx = tA.x * w + tB.x * v + tC.x * u
-                    ty = tA.y * w + tB.y * v + tC.y * u
-                    
-                    color = texture.getColor(tx, ty, intensity)
-                
+                tA, tB, tC = position
+                tnA, tnB, tnC = normals
+                                    
                 z = A.z * w + B.z * v + C.z * u
 
                 if y < len(this.zbuffer) - 1 and x < len(this.zbuffer[0]) - 1 and x >= 0 and y >= 0:
                     if z > this.zbuffer[y][x]:
-                        this.cursorColor = color
+                        if this.activeShader:
+                            this.cursorColor = this.shader((w,u,v), this.light, (tA, tB, tC), (tnA,tnB,tnC), (x,y))
+                        elif texture:
+                            tx = tA.x * w + tB.x * v + tC.x * u
+                            ty = tA.y * w + tB.y * v + tC.y * u
+                    
+                            color = texture.getColor(tx, ty, intensity)
+                            this.cursorColor = color
+                        else:
+                            this.cursorColor = color
+                        
                         this.vertex(x, y)
-
                         this.zbuffer[y + this.offset[1]][x + this.offset[0]] = z
     
     def transform(this, vertex):
@@ -393,6 +434,61 @@ class gl(object):
             [0, 0, 128, 128],
             [0, 0, 0, 1]
         ]
+
+    def shader(this, bar, light, textureCoords, normals, coords):
+        w, u, v = bar
+        L = light
+        tA, tB, tC = textureCoords
+        nA, nB, nC = normals
+        x, y = coords
+
+        if this.activeTexture:
+            nx = nA.x * w + nB.x * u + nC.x * v
+            ny = nA.y * w + nB.y * u + nC.y * v
+            nz = nA.z * w + nB.z * u + nC.z * v
+
+            i = dot(norm(V3(nx,ny,nz)),L)
+
+            tx = tA.x * w + tB.x * u + tC.x * v
+            ty = tA.y * w + tB.y * u + tC.y * v
+
+            return this.activeTexture.getColor(tx, ty, i)
+
+        else:
+            r1, g1, b1 = BLACK
+            r2, g2, b2 = BLACK
+            percentage = 1
+            r,g,b = BLACK
+
+            if (this.activeShader == "planet"):
+                if y > 0 and y <= 1000:
+                    r1, g1, b1 = BLUE
+                    r2, g2, b2 = BLUE
+                    percentage = 0.5
+
+                percentage = (percentage / 50)
+                r = r1 + percentage * (r2 - r1)
+                g = g1 + percentage * (g2 - g1)
+                b = b1 + percentage * (b2 - b1)
+
+                if (y % 40) in range(0, 14):
+                    r *= 0.98
+                    g *= 0.98
+                    b *= 0.98
+
+                return color(r, g, b)
+
+    def randomPoints(this, iterations, color = color(255, 255, 255)):
+        prevColor = this.cursorColor
+        
+        for i in range(iterations):
+            this.cursorColor = color
+
+            x = uniform(0, this.imageSize[0])
+            y = uniform(0, this.imageSize[1])
+            this.vertex(x,y)
+
+        this.cursorColor = prevColor
 
     def finish(this, name):
         writeBMP(this.pixels, name)
