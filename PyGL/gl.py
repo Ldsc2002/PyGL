@@ -5,7 +5,8 @@ from PyGL.texture import texture
 from random import randint, uniform
 
 BLACK = 0, 0, 0
-BLUE = 0, 0, 255
+ORANGE = 255, 165, 0
+WHITE = 255, 255, 255
 
 class gl(object):
     def __init__(this):
@@ -462,21 +463,22 @@ class gl(object):
 
             if (this.activeShader == "planet"):
                 if y > 0 and y <= 1000:
-                    r1, g1, b1 = BLUE
-                    r2, g2, b2 = BLUE
+                    r1, g1, b1 = ORANGE
+                    r2, g2, b2 = ORANGE
                     percentage = 0.5
 
-                percentage = (percentage / 50)
-                r = r1 + percentage * (r2 - r1)
-                g = g1 + percentage * (g2 - g1)
-                b = b1 + percentage * (b2 - b1)
+            if (this.activeShader == "moon"):
+                if y > 0 and y <= 1000:
+                    r1, g1, b1 = WHITE
+                    r2, g2, b2 = WHITE
+                    percentage = 0.5
 
-                if (y % 40) in range(0, 14):
-                    r *= 0.98
-                    g *= 0.98
-                    b *= 0.98
 
-                return color(r, g, b)
+            r = r1 + percentage * (r2 - r1)
+            g = g1 + percentage * (g2 - g1)
+            b = b1 + percentage * (b2 - b1)
+
+            return color(r, g, b)
 
     def randomPoints(this, iterations, color = color(255, 255, 255)):
         prevColor = this.cursorColor
