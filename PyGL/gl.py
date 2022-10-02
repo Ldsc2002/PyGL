@@ -5,8 +5,11 @@ from PyGL.texture import texture
 from random import randint, uniform
 
 BLACK = 0, 0, 0
+RED = 255, 0, 0
 ORANGE = 255, 165, 0
 WHITE = 255, 255, 255
+ORANGERED = 255, 67, 20
+YELLOW = 255, 255, 0
 
 class gl(object):
     def __init__(this):
@@ -461,18 +464,72 @@ class gl(object):
             percentage = 1
             r,g,b = BLACK
 
-            if (this.activeShader == "planet"):
+            if (this.activeShader == "mars"):
                 if y > 0 and y <= 1000:
-                    r1, g1, b1 = ORANGE
+                    r1, g1, b1 = ORANGERED
                     r2, g2, b2 = ORANGE
+                    percentage = 0
+
+                if x > 0 and x <= 350:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = YELLOW
+                    percentage = abs(x - 350) / 350
+
+                if x > 500 and x <= 800:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = abs((x - 500) / 300)
+
+                if (((x - 450) ** 2) / (144 ** 2) + ((y - 450) ** 2) / (9 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
                     percentage = 0.5
+
+                if (((x - 550) ** 2) / (100 ** 2) + ((y - 440) ** 2) / (16 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = 0.5
+
+                if (((x - 600) ** 2) / (36 ** 2) + ((y - 600) ** 2) / (36 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = 0.5
+
+                if (((x - 650) ** 2) / (16 ** 2) + ((y - 500) ** 2) / (16 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = 0.7
+                
+                if (((x - 700) ** 2) / (16 ** 2) + ((y - 600) ** 2) / (16 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = 0.9
+
+                if (((x - 650) ** 2) / (16 ** 2) + ((y - 375) ** 2) / (16 ** 2)) <= 1:
+                    r1, g1, b1 = ORANGERED
+                    r2, g2, b2 = BLACK
+                    percentage = 0.8
 
             if (this.activeShader == "moon"):
-                if y > 0 and y <= 1000:
+                if x > 700 and y <= 1000:
                     r1, g1, b1 = WHITE
-                    r2, g2, b2 = WHITE
-                    percentage = 0.5
+                    r2, g2, b2 = BLACK
+                    percentage = abs((x - 700) / 300)
 
+                if (((x - 835) ** 2) / (16 ** 2) + ((y - 825) ** 2) / (16 ** 2)) <= 1:
+                    r1, g1, b1 = WHITE
+                    r2, g2, b2 = BLACK
+                    percentage = 0.75
+
+                if (((x - 855) ** 2) / (9 ** 2) + ((y - 885) ** 2) / (9 ** 2)) <= 1:
+                    r1, g1, b1 = WHITE
+                    r2, g2, b2 = BLACK
+                    percentage = 0.75
+
+                if (((x - 880) ** 2) / (9 ** 2) + ((y - 845) ** 2) / (9 ** 2)) <= 1:
+                    r1, g1, b1 = WHITE
+                    r2, g2, b2 = BLACK
+                    percentage = 0.75
 
             r = r1 + percentage * (r2 - r1)
             g = g1 + percentage * (g2 - g1)
