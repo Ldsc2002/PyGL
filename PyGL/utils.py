@@ -1,6 +1,7 @@
 import struct
 from collections import namedtuple
 from math import cos, sin
+from turtle import width
 
 V2 = namedtuple('Point2D', ['x', 'y'])
 V3 = namedtuple('Point3D', ['x', 'y', 'z'])
@@ -88,8 +89,8 @@ def color(r, g, b):
 
 def writeBMP(pixels, name):
     # Prints the pixels to the screen
-    width = len(pixels)
-    height = len(pixels[0])
+    height = len(pixels)
+    width = len(pixels[0])
     
     name  = name + '.bmp'
     f = open(name, 'bw')
