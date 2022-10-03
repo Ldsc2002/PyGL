@@ -17,7 +17,18 @@ class obj(object):
                 if prefix == 'v':
                     this.vertices.append(list(map(float, value.split(' '))))
                 elif prefix == 'f':
-                    this.faces.append([list(map(int , face.split('/'))) for face in value.split(' ')])
-                elif prefix == 'vt':
-                    this.tvertices.append(list(map(float, value.split(' ')))) 
+                    temp = [list(map(int , face.split('/'))) for face in value.split(' ')]
 
+                    for face in temp:
+                        if len(face) == 2:
+                            face.append(0)
+
+                    this.faces.append(temp)
+
+                elif prefix == 'vt':
+                    vertice = list(map(float, value.split(' ')))
+
+                    if(len(vertice) == 2):
+                        vertice.append(0)
+
+                    this.tvertices.append(vertice)  
