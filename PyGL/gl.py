@@ -29,6 +29,9 @@ class gl(object):
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
 
+    def setBackground(this, filename):
+        this.pixels = filename
+
     def createWindow(this, newWidth, newHeight):
         if not (newWidth > 0) or not (newHeight > 0):
             raise Exception('Window size must be greater than 0')
@@ -113,11 +116,11 @@ class gl(object):
 
         y = y1
 
-        for x in range(x1, x2):
+        for x in range(int(x1), int(x2)):
             if steep:
-                gl.vertex(this, y, x)
+                this.vertex(this, y, x)
             else:
-                gl.vertex(this, x, y)
+                this.vertex(this, x, y)
             
             offset += dy
             if offset >= threshold:

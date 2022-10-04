@@ -29,7 +29,10 @@ class texture(object):
         image.close()
 
     def getColor(this, x, y, intensity = 1):
-        x = int(x * this.width)
-        y = int(y * this.height)
+        if x >= 0 and x < 1 and y >= 0 and y < 1:
+            x = int(x * this.width)
+            y = int(y * this.height)
 
-        return bytes(map(lambda b: round(b*intensity) if b*intensity > 0 else 0, this.pixels[y][x]))
+            return bytes(map(lambda b: round(b*intensity) if b*intensity > 0 else 0, this.pixels[y][x]))
+        else:
+            return bytes([0, 0, 0])
