@@ -1,7 +1,6 @@
 import struct
 from collections import namedtuple
 from math import cos, sin
-from turtle import width
 
 V2 = namedtuple('Point2D', ['x', 'y'])
 V3 = namedtuple('Point3D', ['x', 'y', 'z'])
@@ -18,11 +17,38 @@ def sub(v0, v1):
 		v0.z - v1.z
 	)
 
+def sub2(x0, x1, y0, y1):
+    arr_sub = []
+    arr_sub.extend((x0 - x1, y0 - y1))
+    return arr_sub
+
+def sub3(x0, x1, y0, y1, z0, z1):
+    arr_sub = []
+    arr_sub.extend((x0 - x1, y0 - y1, z0 - z1))
+    return arr_sub
+
+def subVectors(vec1, vec2):
+    subList = []
+    subList.extend((vec1[0] - vec2[0], vec1[1] - vec2[1], vec1[2] - vec2[2]))
+    return subList
+
 def mul(v0, k):
     return V3(v0.x * k, v0.y * k, v0.z *k)
 
+def multiplyVM(v, m):
+    result = []
+    for i in range(len(m)):
+        total = 0
+        for j in range(len(v)):
+            total += m[i][j] * v[j]
+        result.append(total)
+    return result  
+
 def dot(v0, v1):
     return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z
+
+def dot2(norm, lX, lY, lZ):
+    return ((norm[0] * lX) + (norm[1] * lY) + (norm[2] * lZ))
 
 def cross(v0, v1): 
 	cx = v0.y * v1.z - v0.z * v1.y
@@ -74,6 +100,16 @@ def matrixDot(v1, v2):
 
 def productMatrixVector(M, v):
     return [matrixDot(r,v) for r in M]
+
+def div(v0, norm):
+    if (norm == 0):
+        arr0_norm = []
+        arr0_norm.extend((0,0,0))
+        return arr0_norm
+    else:
+        arr_div = []
+        arr_div.extend((v0[0] / norm, v0[1] / norm, v0[2] / norm))
+        return arr_div
 
 def char(c):
     return struct.pack('=c', c.encode('ascii'))

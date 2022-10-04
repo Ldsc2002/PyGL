@@ -1,4 +1,3 @@
-from email.mime import image
 from PyGL.utils import *
 from PyGL.obj import obj
 from PyGL.texture import texture
@@ -25,6 +24,7 @@ class gl(object):
         this.viewPortMatrix = None
         this.activeShader = None
         this.activeTexture = None
+        this.activeNormalMap = None
 
         this.backgroundColor = color(0, 0, 0) # Default background is black
         this.cursorColor = color(255, 255, 255) # Default color is white
@@ -221,11 +221,12 @@ class gl(object):
         rotateMatrix = productMatrix(productMatrix(rotateXMatrix, rotateYMatrix), rotateZMatrix)
         this.model = productMatrix(productMatrix(translateMatrix, scaleMatrix), rotateMatrix)
 
-    def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None, shader = None):
+    def load(this, filename, translate = (0, 0, 0), scale = (1, 1, 1), rotate = (0, 0, 0), texture = None, shader = None, normal = None):
         model = obj(filename)
         this.loadMatrix(translate, scale, rotate)
         this.activeShader = shader
         this.activeTexture = texture
+        this.activeNormalMap = normal
 
         for face in model.faces:
             count = len(face)
@@ -442,12 +443,13 @@ class gl(object):
             [0, 0, 0, 1]
         ]
 
-    def shader(this, bar, light, textureCoords, normals, coords):
+    def shader(this, bar, light, textureCoords, normals, coords, vertices = (0, 0, 0)):
         w, u, v = bar
         L = light
         tA, tB, tC = textureCoords
         nA, nB, nC = normals
         x, y = coords
+        A, B, C = vertices
 
         if this.activeTexture:
             nx = nA.x * w + nB.x * u + nC.x * v
@@ -459,7 +461,65 @@ class gl(object):
             tx = tA.x * w + tB.x * u + tC.x * v
             ty = tA.y * w + tB.y * u + tC.y * v
 
-            return this.activeTexture.getColor(tx, ty, i)
+            if this.activeNormalMap:
+                normal = (nx, ny, nz)
+
+                ta = (tA.x, tA.y)
+                tb = (tB.x, tB.y)
+                tc = (tC.x, tC.y)
+
+                texNormal = this.activeNormalMap.get_color(tx, ty)
+                texNormal = V3((texNormal[2]) * 2 - 1,
+                            (texNormal[1]) * 2 - 1,
+                            (texNormal[0]) * 2 - 1)
+
+                texNormal = div(texNormal, length(texNormal))
+
+                # B - A
+                edge1 = sub(B[0], A[0], B[1], A[1], B[2], A[2])
+                # C - A
+                edge2 = sub(C[0], A[0], C[1], A[1], C[2], A[2])
+                # tb - ta 
+                deltaUV1 = sub2(tb[0], ta[0], tb[1], ta[1])
+                # tc - ta
+                deltaUV2 = sub2(tc[0], ta[0], tc[1], ta[1])
+
+                tangent = [0,0,0]
+                f = 1 / (deltaUV1[0] * deltaUV2[1] - deltaUV2[0] * deltaUV1[1])
+                tangent.x = f * (deltaUV2[1] * edge1[0] - deltaUV1[1] * edge2[0])
+                tangent.y = f * (deltaUV2[1] * edge1[1] - deltaUV1[1] * edge2[1])
+                tangent.z = f * (deltaUV2[1] * edge1[2] - deltaUV1[1] * edge2[2])
+                tangent = div(tangent, length(tangent))
+                tangent = div(tangent, length(tangent))
+                tangent = subVectors(tangent, dot(dot2(tangent, normal[0], normal[1], normal[2]), normal))
+                tangent = tangent / length(tangent)
+
+                bitangent = cross(normal, tangent)
+                bitangent = bitangent / length(bitangent)
+
+                tangentMatrix = [
+                    [tangent[0],bitangent[0],normal[0]],
+                    [tangent[1],bitangent[1],normal[1]],
+                    [tangent[2],bitangent[2],normal[2]]
+                ]
+
+                light = L 
+                light = multiplyVM(light, tangentMatrix)
+                light = div(light, norm(light))
+
+                intensity = dot(texNormal, light[0], light[1], light[2])
+
+                r, g, b = this.activeTexture.get_color(tx, ty, intensity)
+
+                if intensity > 0:
+                    return color(r, g, b)
+
+                else:
+                    return color(0,0,0)
+            
+            else:             
+                return this.activeTexture.getColor(tx, ty, i)
+
 
         else:
             r1, g1, b1 = BLACK
